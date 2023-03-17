@@ -11,11 +11,29 @@ def listing(request, id):
     listingData = Listing.objects.get(pk=id)
     isListingInWatchList = request.user in listingData.watchList.all()
     allComments = Comment.objects.filter(listing=listingData)
-
+    isOwner = request.user.username == listingData.owner.username
     return render(request, "auctions/listing.html", {
         "listing":listingData,
         "isListingInWatchList": isListingInWatchList,
-        "allComments": allComments
+        "allComments": allComments,
+        "isOwner": isOwner,
+    })
+
+
+def closeAuction(request, id):
+    listingData = Listing.objects.get(pk=id)
+    listingData.isActive = False
+    listingData.save()
+    isOwner = request.user.username == listingData.owner.username
+    isListingInWatchList = request.user in listingData.watchList.all()
+    allComments = Comment.objects.filter(listing=listingData)
+    return render(request, "auctions/listing.html", {
+        "listing":listingData,
+        "isListingInWatchList": isListingInWatchList,
+        "allComments": allComments,
+        "isOwner": isOwner,
+        "update":True,
+        "message": "Congratulations! Your auction is closed."
     })
 
 
@@ -40,6 +58,7 @@ def addBid(request, id):
     listingData = Listing.objects.get(pk=id)
     isListingInWatchList = request.user in listingData.watchList.all()
     allComments = Comment.objects.filter(listing=listingData)
+    isOwner = request.user.username == listingData.owner.username
     if int(newBid) > listingData.price.bid:
         updateBid = Bid(user=request.user, bid=newBid)
         updateBid.save()
@@ -48,13 +67,19 @@ def addBid(request, id):
         return render(request, "auctions/listing.html", {
             "listing": listingData,
             "message": "Bid was updated successfully",
-            "update":True
+            "update":True,
+            "isListingInWatchList": isListingInWatchList,
+            "allComments": allComments,
+            "isOwner": isOwner,
         }) 
     else:
         return render(request, "auctions/listing.html", {
             "listing": listingData,
             "message": "Bid update failed",
-            "update":False
+            "update":False,
+            "isListingInWatchList": isListingInWatchList,
+            "allComments": allComments,
+            "isOwner": isOwner,
         }) 
 
 def displayWatchList(request):
