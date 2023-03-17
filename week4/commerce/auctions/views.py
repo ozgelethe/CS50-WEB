@@ -35,6 +35,28 @@ def addComment(request, id):
     return HttpResponseRedirect(reverse("listing", args=(id, )))
 
 
+def addBid(request, id):
+    newBid =request.POST['newBid']
+    listingData = Listing.objects.get(pk=id)
+    isListingInWatchList = request.user in listingData.watchList.all()
+    allComments = Comment.objects.filter(listing=listingData)
+    if int(newBid) > listingData.price.bid:
+        updateBid = Bid(user=request.user, bid=newBid)
+        updateBid.save()
+        listingData.price = updateBid
+        listingData.save()
+        return render(request, "auctions/listing.html", {
+            "listing": listingData,
+            "message": "Bid was updated successfully",
+            "update":True
+        }) 
+    else:
+        return render(request, "auctions/listing.html", {
+            "listing": listingData,
+            "message": "Bid update failed",
+            "update":False
+        }) 
+
 def displayWatchList(request):
     currentUser = request.user
     listings = currentUser.listingWatchList.all()
